@@ -1,6 +1,7 @@
 package eventbus_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -14,13 +15,13 @@ func TestEmitEvent(t *testing.T) {
 
 	e := eventbus.NewEventBus[any]()
 
-	e.On("test", func(a any) error {
+	e.On("test", func(_ context.Context, a any) error {
 		status = "passed"
 
 		return nil
 	})
 
-	e.Emit("test", nil)
+	e.Emit(context.Background(), "test", nil)
 	assert.NotEqual(t, "failed", status)
 }
 
@@ -29,16 +30,51 @@ func TestEmitErrorHandler(t *testing.T) {
 
 	e := eventbus.NewEventBus[any]()
 
-	e.On("test", func(a any) error {
+	e.On("test", func(_ context.Context, a any) error {
 		return errors.New("Test")
 	})
 
-	e.OnError(func(event any, err error) {
+	e.OnError(func(_ context.Context, a any, err error) {
 		status = "failed"
 	})
 
-	err := e.Emit("test", nil)
+	err := e.Emit(context.Background(), "test", nil)
 
 	assert.Equal(t, "failed", status)
 	assert.NotNil(t, err)
+}
+
+func TestEmitUsingContext(t *testing.T) {
+	var name string
+
+	e := eventbus.NewEventBus[any]()
+
+	e.On("test", func(ctx context.Context, a any) error {
+		name = ctx.Value("name").(string)
+
+		return nil
+	})
+
+	ctx := context.WithValue(context.Background(), "name", "sina")
+	e.Emit(ctx, "test", nil)
+
+	assert.Equal(t, ctx.Value("name"), name)
+}
+
+func TestUseContextInErrorHandler(t *testing.T) {
+	var name string
+
+	e := eventbus.NewEventBus[any]()
+
+	e.On("test", func(ctx context.Context, a any) error {
+		return errors.New("Test")
+	})
+
+	e.OnError(func(ctx context.Context, a any, err error) {
+		name = ctx.Value("name").(string)
+	})
+
+	ctx := context.WithValue(context.Background(), "name", "sina")
+	e.Emit(ctx, "test", nil)
+	assert.Equal(t, ctx.Value("name"), name)
 }
