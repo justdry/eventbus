@@ -10,6 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type Example string
+
+const KEY_NAME Example = "name"
+
 func TestEmitEvent(t *testing.T) {
 	status := "failed"
 
@@ -50,15 +54,15 @@ func TestEmitUsingContext(t *testing.T) {
 	e := eventbus.NewEventBus[any]()
 
 	e.On("test", func(ctx context.Context, a any) error {
-		name = ctx.Value("name").(string)
+		name = ctx.Value(KEY_NAME).(string)
 
 		return nil
 	})
 
-	ctx := context.WithValue(context.Background(), "name", "sina")
+	ctx := context.WithValue(context.Background(), KEY_NAME, "sina")
 	e.Emit(ctx, "test", nil)
 
-	assert.Equal(t, ctx.Value("name"), name)
+	assert.Equal(t, ctx.Value(KEY_NAME), name)
 }
 
 func TestUseContextInErrorHandler(t *testing.T) {
@@ -71,10 +75,25 @@ func TestUseContextInErrorHandler(t *testing.T) {
 	})
 
 	e.OnError(func(ctx context.Context, a any, err error) {
-		name = ctx.Value("name").(string)
+		name = ctx.Value(KEY_NAME).(string)
 	})
 
-	ctx := context.WithValue(context.Background(), "name", "sina")
+	ctx := context.WithValue(context.Background(), KEY_NAME, "sina")
 	e.Emit(ctx, "test", nil)
-	assert.Equal(t, ctx.Value("name"), name)
+	assert.Equal(t, ctx.Value(KEY_NAME), name)
+}
+
+// It should run with the `-race` flag
+func TestRaceCondition(t *testing.T) {
+	e := eventbus.NewEventBus[any]()
+
+	registerAndEmit := func() {
+		go e.On("test", func(ctx context.Context, a any) error {
+			return nil
+		})
+
+		go e.Emit(context.Background(), "test", nil)
+	}
+
+	assert.NotPanics(t, registerAndEmit)
 }
