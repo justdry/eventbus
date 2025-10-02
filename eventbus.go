@@ -45,7 +45,7 @@ func (e *EventBus[E]) Emit(ctx context.Context, name string, event E) (err error
 	return err
 }
 
-func (e *EventBus[E]) On(name string, handler Handler[E]) {
+func (e *EventBus[E]) Subscribe(name string, handler Handler[E]) {
 	e.mux.Lock()
 	defer e.mux.Unlock()
 

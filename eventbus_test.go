@@ -19,7 +19,7 @@ func TestEmitEvent(t *testing.T) {
 
 	e := eventbus.NewEventBus[any]()
 
-	e.On("test", func(_ context.Context, a any) error {
+	e.Subscribe("test", func(_ context.Context, a any) error {
 		status = "passed"
 
 		return nil
@@ -34,7 +34,7 @@ func TestEmitErrorHandler(t *testing.T) {
 
 	e := eventbus.NewEventBus[any]()
 
-	e.On("test", func(_ context.Context, a any) error {
+	e.Subscribe("test", func(_ context.Context, a any) error {
 		return errors.New("Test")
 	})
 
@@ -53,7 +53,7 @@ func TestEmitUsingContext(t *testing.T) {
 
 	e := eventbus.NewEventBus[any]()
 
-	e.On("test", func(ctx context.Context, a any) error {
+	e.Subscribe("test", func(ctx context.Context, a any) error {
 		name = ctx.Value(KEY_NAME).(string)
 
 		return nil
@@ -70,7 +70,7 @@ func TestUseContextInErrorHandler(t *testing.T) {
 
 	e := eventbus.NewEventBus[any]()
 
-	e.On("test", func(ctx context.Context, a any) error {
+	e.Subscribe("test", func(ctx context.Context, a any) error {
 		return errors.New("Test")
 	})
 
@@ -88,7 +88,7 @@ func TestRaceCondition(t *testing.T) {
 	e := eventbus.NewEventBus[any]()
 
 	registerAndEmit := func() {
-		go e.On("test", func(ctx context.Context, a any) error {
+		go e.Subscribe("test", func(ctx context.Context, a any) error {
 			return nil
 		})
 
@@ -103,13 +103,13 @@ func TestEmitAllHandlers(t *testing.T) {
 
 	e := eventbus.NewEventBus[any]()
 
-	e.On("test", func(_ context.Context, a any) error {
+	e.Subscribe("test", func(_ context.Context, a any) error {
 		status[0] = "passed 1"
 
 		return nil
 	})
 
-	e.On("test", func(_ context.Context, a any) error {
+	e.Subscribe("test", func(_ context.Context, a any) error {
 		status[1] = "passed 2"
 
 		return nil
