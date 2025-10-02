@@ -97,3 +97,25 @@ func TestRaceCondition(t *testing.T) {
 
 	assert.NotPanics(t, registerAndEmit)
 }
+
+func TestEmitAllHandlers(t *testing.T) {
+	status := [2]string{"failed", "failed"}
+
+	e := eventbus.NewEventBus[any]()
+
+	e.On("test", func(_ context.Context, a any) error {
+		status[0] = "passed 1"
+
+		return nil
+	})
+
+	e.On("test", func(_ context.Context, a any) error {
+		status[1] = "passed 2"
+
+		return nil
+	})
+
+	e.Emit(context.Background(), "test", nil)
+	assert.NotEqual(t, "failed", status[0])
+	assert.NotEqual(t, "failed", status[1])
+}
