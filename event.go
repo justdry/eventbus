@@ -12,8 +12,9 @@ func newEvent[Payload any]() *Event[Payload] {
 }
 
 type Event[Payload any] struct {
-	handlers []Handler[Payload]
-	mux      sync.Mutex
+	handlers   []Handler[Payload]
+	ErrorEvent *ErrorEvent[Payload]
+	mux        sync.Mutex
 }
 
 type Handler[Payload any] func(ctx context.Context, p Payload) error
@@ -25,6 +26,10 @@ func (e *Event[Payload]) Emit(ctx context.Context, p Payload) (err error) {
 
 	for _, handler := range handlers {
 		if err = handler(ctx, p); err != nil {
+			if e.ErrorEvent != nil {
+				e.ErrorEvent.Emit(ctx, err, p)
+			}
+
 			break
 		}
 	}
