@@ -1,22 +1,21 @@
-# Event Bus
+# EventBus
 
 <img src=".github/splash.jpg" width="60%" alt="JustDRY's EventBus Splash" />
 
-A simple, generic, thread-safe event bus for Go.
-`eventbus` lets you register event handlers, emit events, and hook into error handling using Go’s `context.Context`.
+A small, generic, thread-safe event bus for Go. EventBus is type-safe using Go generics, supports contexts for propagation of request-scoped values and deadlines, and provides a centralized mechanism for handling errors produced by event handlers.
 
 ---
 
-## ✨ Features
+## Features
 
--   **Type-safe with Generics** — define your own event type.
--   **Thread-safe** — tested with Go’s `-race` flag.
--   **Error Handling** — attach an error handler to centralize error management.
--   **Context Support** — propagate deadlines, cancelation signals, or request-scoped data into your handlers.
+-   Type-safe with Generics — define your own payload type for events.
+-   Thread-safe — internal synchronization via mutexes; tests run with the `-race` flag.
+-   Centralized Error Handling — all events share a single, attachable error handler (per EventBus instance).
+-   Context Support — handlers receive a `context.Context`, so you can carry deadlines, cancellation, or request-scoped values.
 
 ---
 
-## 🚀 Installation
+## Installation
 
 ```bash
 go get github.com/justdry/eventbus
@@ -24,9 +23,11 @@ go get github.com/justdry/eventbus
 
 ---
 
-## 📖 Usage
+## Quick Start
 
-### Basic Example
+This package exposes a generic EventBus type. Create a bus using `eventbus`.`New[Payload]()`, register named events using `Event(name)` and subscribe handlers to those events.
+
+### Basic example
 
 ```go
 package main
@@ -39,72 +40,91 @@ import (
 )
 
 func main() {
-	// Create a new event bus
-	e := eventbus.NewEventBus[string]()
+	// Create a new event bus carrying string payloads
+	bus := eventbus.New[string]()
 
-	// Register a handler
-	e.On("greet", func(ctx context.Context, name string) error {
+	// Get (or create) the named event and register a handler
+	greet := bus.Event("greet")
+	greet.Subscribe(func(ctx context.Context, name string) error {
 		fmt.Printf("Hello, %s!\n", name)
 		return nil
 	})
 
-	// Emit an event
-	e.Emit(context.Background(), "greet", "Sina")
+	// Emit the event
+	greet.Emit(context.Background(), "Sina")
 }
 ```
 
----
+### Centralized error handling
 
-### Error Handling
+The EventBus creates a shared ErrorEvent for all events. You can subscribe a single error handler to receive errors from handlers across the bus.
 
 ```go
-e := eventbus.NewEventBus[string]()
+bus := eventbus.New[string]()
 
-// Register a handler that may fail
-e.On("fail", func(ctx context.Context, msg string) error {
-	return fmt.Errorf("something went wrong: %s", msg)
+// Register the handlers that return an error
+bus.Event("danger1").Subscribe(func(ctx context.Context, msg string) error {
+	return fmt.Errorf("handler failed: %s", msg)
 })
 
-// Register a centralized error handler
-e.OnError(func(ctx context.Context, msg string, err error) {
+bus.Event("danger2").Subscribe(func(ctx context.Context, msg string) error {
+	return fmt.Errorf("handler chokhed up: %s", msg)
+})
+
+// Register a centralized error handler for the bus
+bus.ErrorEvent().Subscribe(func(ctx context.Context, err error, payload string) {
 	fmt.Println("Error occurred:", err)
 })
 
-// Emit the event
-_ = e.Emit(context.Background(), "fail", "boom!")
+// Emitting will call the handler, and the first returned error (if any)
+// will be forwarded to the ErrorEvent handler.
+bus.Event("danger1").Emit(context.Background(), "boom!")
+bus.Event("danger2").Emit(context.Background(), "boom!")
 ```
 
----
+### Using context values in handlers
 
-### Using Context
+Handlers receive a context, so you can pass request-scoped data or deadlines.
 
 ```go
 type ctxKey string
-
 const userKey ctxKey = "user"
 
-e := eventbus.NewEventBus[any]()
+bus := eventbus.New[any]()
+auth := bus.Event("auth")
 
-// Register handler using context value
-e.On("auth", func(ctx context.Context, _ any) error {
+auth.Subscribe(func(ctx context.Context, _ any) error {
 	user := ctx.Value(userKey).(string)
 	fmt.Println("User:", user)
 	return nil
 })
 
-// Emit with context
+// Emit with a context that carries the "user"
 ctx := context.WithValue(context.Background(), userKey, "sina")
-e.Emit(ctx, "auth", nil)
+auth.Emit(ctx, nil)
 ```
 
 ---
 
-## ✅ Testing
+## Notes
 
-This package includes a full test suite. Run:
+-   EventBus ensures the same ErrorEvent instance is shared across all named events created from a bus, so errors from different events can be handled by a single subscriber.
+-   The Event.Emit method iterates over a snapshot of handlers to avoid races with concurrent Subscribe calls; mutexes protect internal state.
+
+---
+
+## Testing
+
+Run the test suite (recommended with the race detector):
 
 ```bash
 go test ./... -race
 ```
 
-The `-race` flag is recommended to ensure thread safety.
+The tests exercise event emitting, context propagation, error forwarding, and concurrency properties.
+
+---
+
+## Contributing
+
+Contributions, bug reports, and improvements are welcome. Please open issues or PRs on the repository.
