@@ -6,13 +6,15 @@ import (
 
 func New[Payload any]() EventBus[Payload] {
 	return EventBus[Payload]{
-		events: make(map[string]*Event[Payload]),
+		events:     make(map[string]*Event[Payload]),
+		errorEvent: newErrorEvent[Payload](),
 	}
 }
 
 type EventBus[Payload any] struct {
-	events map[string]*Event[Payload]
-	mux    sync.Mutex
+	events     map[string]*Event[Payload]
+	errorEvent *ErrorEvent[Payload]
+	mux        sync.Mutex
 }
 
 func (bus *EventBus[Payload]) Event(name string) *Event[Payload] {
@@ -22,8 +24,14 @@ func (bus *EventBus[Payload]) Event(name string) *Event[Payload] {
 	event, exists := bus.events[name]
 	if !exists {
 		event = newEvent[Payload]()
+		event.ErrorEvent = bus.errorEvent
+
 		bus.events[name] = event
 	}
 
 	return event
+}
+
+func (bus *EventBus[Payload]) ErrorEvent() *ErrorEvent[Payload] {
+	return bus.errorEvent
 }
