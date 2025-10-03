@@ -1,57 +1,29 @@
 package eventbus
 
 import (
-	"context"
-	"fmt"
 	"sync"
 )
 
-func NewEventBus[E any]() EventBus[E] {
-	return EventBus[E]{
-		handlers:     make(map[string][]Handler[E]),
-		errorHandler: nil,
+func New[Payload any]() EventBus[Payload] {
+	return EventBus[Payload]{
+		events: make(map[string]*Event[Payload]),
 	}
 }
 
-type EventBus[E any] struct {
-	handlers     map[string][]Handler[E]
-	errorHandler ErrorHandler[E]
-	mux          sync.Mutex
+type EventBus[Payload any] struct {
+	events map[string]*Event[Payload]
+	mux    sync.Mutex
 }
 
-type Handler[E any] func(ctx context.Context, event E) error
+func (bus *EventBus[Payload]) Event(name string) *Event[Payload] {
+	bus.mux.Lock()
+	defer bus.mux.Unlock()
 
-type ErrorHandler[E any] func(ctx context.Context, event E, err error)
-
-func (e *EventBus[E]) Emit(ctx context.Context, name string, event E) (err error) {
-	e.mux.Lock()
-	handlers, exists := e.handlers[name]
-	e.mux.Unlock()
-
+	event, exists := bus.events[name]
 	if !exists {
-		return fmt.Errorf("there is no handler for event `%s`", name)
+		event = newEvent[Payload]()
+		bus.events[name] = event
 	}
 
-	for _, handler := range handlers {
-		if err = handler(ctx, event); err != nil {
-			if e.errorHandler != nil {
-				e.errorHandler(ctx, event, err)
-			}
-
-			break
-		}
-	}
-
-	return err
-}
-
-func (e *EventBus[E]) Subscribe(name string, handler Handler[E]) {
-	e.mux.Lock()
-	defer e.mux.Unlock()
-
-	e.handlers[name] = append(e.handlers[name], handler)
-}
-
-func (e *EventBus[E]) OnError(handler ErrorHandler[E]) {
-	e.errorHandler = handler
+	return event
 }

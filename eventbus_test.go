@@ -6,116 +6,30 @@ import (
 	"testing"
 
 	"github.com/justdry/eventbus"
-
 	"github.com/stretchr/testify/assert"
 )
 
-type Example string
+func TestBusEventAvoidDuplicateEvent(t *testing.T) {
+	bus := eventbus.New[any]()
 
-const KEY_NAME Example = "name"
+	e1 := bus.Event("test")
+	e1.Subscribe(func(ctx context.Context, p any) error { return nil })
 
-func TestEmitEvent(t *testing.T) {
-	status := "failed"
+	e2 := bus.Event("test")
+	e2.Subscribe(func(ctx context.Context, p any) error { return errors.New("") })
 
-	e := eventbus.NewEventBus[any]()
-
-	e.Subscribe("test", func(_ context.Context, a any) error {
-		status = "passed"
-
-		return nil
-	})
-
-	e.Emit(context.Background(), "test", nil)
-	assert.NotEqual(t, "failed", status)
-}
-
-func TestEmitErrorHandler(t *testing.T) {
-	var status string
-
-	e := eventbus.NewEventBus[any]()
-
-	e.Subscribe("test", func(_ context.Context, a any) error {
-		return errors.New("Test")
-	})
-
-	e.OnError(func(_ context.Context, a any, err error) {
-		status = "failed"
-	})
-
-	err := e.Emit(context.Background(), "test", nil)
-
-	assert.Equal(t, "failed", status)
-	assert.NotNil(t, err)
-}
-
-func TestEmitUsingContext(t *testing.T) {
-	var name string
-
-	e := eventbus.NewEventBus[any]()
-
-	e.Subscribe("test", func(ctx context.Context, a any) error {
-		name = ctx.Value(KEY_NAME).(string)
-
-		return nil
-	})
-
-	ctx := context.WithValue(context.Background(), KEY_NAME, "sina")
-	e.Emit(ctx, "test", nil)
-
-	assert.Equal(t, ctx.Value(KEY_NAME), name)
-}
-
-func TestUseContextInErrorHandler(t *testing.T) {
-	var name string
-
-	e := eventbus.NewEventBus[any]()
-
-	e.Subscribe("test", func(ctx context.Context, a any) error {
-		return errors.New("Test")
-	})
-
-	e.OnError(func(ctx context.Context, a any, err error) {
-		name = ctx.Value(KEY_NAME).(string)
-	})
-
-	ctx := context.WithValue(context.Background(), KEY_NAME, "sina")
-	e.Emit(ctx, "test", nil)
-	assert.Equal(t, ctx.Value(KEY_NAME), name)
+	assert.Equal(t, e1, e2)
 }
 
 // It should run with the `-race` flag
-func TestRaceCondition(t *testing.T) {
-	e := eventbus.NewEventBus[any]()
+func TestBusEventRaceCondition(t *testing.T) {
+	e := eventbus.New[any]()
 
 	registerAndEmit := func() {
-		go e.Subscribe("test", func(ctx context.Context, a any) error {
-			return nil
-		})
+		go e.Event("first")
 
-		go e.Emit(context.Background(), "test", nil)
+		go e.Event("second")
 	}
 
 	assert.NotPanics(t, registerAndEmit)
-}
-
-func TestEmitAllHandlers(t *testing.T) {
-	status := [2]string{"failed", "failed"}
-
-	e := eventbus.NewEventBus[any]()
-
-	e.Subscribe("test", func(_ context.Context, a any) error {
-		status[0] = "passed 1"
-
-		return nil
-	})
-
-	e.Subscribe("test", func(_ context.Context, a any) error {
-		status[1] = "passed 2"
-
-		return nil
-	})
-
-	e.Emit(context.Background(), "test", nil)
-	assert.NotEqual(t, "failed", status[0])
-	assert.NotEqual(t, "failed", status[1])
 }
