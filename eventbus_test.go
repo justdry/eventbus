@@ -33,3 +33,18 @@ func TestBusEventRaceCondition(t *testing.T) {
 
 	assert.NotPanics(t, registerAndEmit)
 }
+
+func TestBusShouldUseSameErrorEventForAllEvents(t *testing.T) {
+	bus := eventbus.New[string]()
+
+	bus.Event("test1").Subscribe(func(ctx context.Context, p string) error {
+		return errors.New(" warning in the world")
+	})
+
+	bus.Event("test2").Subscribe(func(ctx context.Context, p string) error {
+		return errors.New(" error in the world")
+	})
+
+	assert.Same(t, bus.Event("test1").ErrorEvent, bus.Event("test2").ErrorEvent)
+
+}

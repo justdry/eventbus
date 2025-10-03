@@ -2,6 +2,7 @@ package eventbus
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -78,4 +79,29 @@ func TestEmitAllHandlers(t *testing.T) {
 	e.Emit(context.Background(), nil)
 	assert.NotEqual(t, "failed", status[0])
 	assert.NotEqual(t, "failed", status[1])
+}
+
+func TestEventEmitsErrorHandlerOnReceivingError(t *testing.T) {
+	status := "bad"
+
+	event := newEvent[string]()
+	event.Subscribe(func(ctx context.Context, p string) error {
+		return errors.New("Oh")
+	})
+
+	errorEvent := newErrorEvent[string]()
+	errorEvent.Subscribe(func(ctx context.Context, err error, p string) {
+		status = p
+	})
+
+	assert.NotPanics(t, func() {
+		event.Emit(context.Background(), "world")
+	})
+
+	event.ErrorEvent = errorEvent
+
+	err := event.Emit(context.Background(), "world")
+	assert.NotEqual(t, "Oh", err)
+
+	assert.Equal(t, "world", status)
 }
