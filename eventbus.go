@@ -4,6 +4,7 @@ import (
 	"sync"
 )
 
+// Create a new EventBus instance.
 func New[Payload any]() EventBus[Payload] {
 	return EventBus[Payload]{
 		events:     make(map[string]*Event[Payload]),
@@ -17,6 +18,9 @@ type EventBus[Payload any] struct {
 	mux        sync.Mutex
 }
 
+// Return the Event with the given name.
+//
+// If the event does not already exist, it will be created.
 func (bus *EventBus[Payload]) Event(name string) *Event[Payload] {
 	bus.mux.Lock()
 	defer bus.mux.Unlock()
@@ -32,6 +36,9 @@ func (bus *EventBus[Payload]) Event(name string) *Event[Payload] {
 	return event
 }
 
+// Return the shared ErrorEvent for the EventBus.
+//
+// This event is emitted whenever a handler returns an error.
 func (bus *EventBus[Payload]) ErrorEvent() *ErrorEvent[Payload] {
 	return bus.errorEvent
 }
