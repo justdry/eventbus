@@ -43,3 +43,10 @@ func (e *Event[Payload]) Subscribe(handler Handler[Payload]) {
 
 	e.handlers = append(e.handlers, handler)
 }
+
+func (e *Event[Payload]) Flush() {
+	e.mux.Lock()
+	defer e.mux.Unlock()
+
+	e.handlers = make([]Handler[Payload], 0)
+}

@@ -105,3 +105,18 @@ func TestEventEmitsErrorHandlerOnReceivingError(t *testing.T) {
 
 	assert.Equal(t, "world", status)
 }
+
+func TestFlushEventHandlers(t *testing.T) {
+	status := "nothing changed"
+
+	event := newEvent[string]()
+	event.Subscribe(func(ctx context.Context, p string) error {
+		status = p
+		return nil
+	})
+
+	event.Flush()
+
+	event.Emit(context.Background(), "Hello Universe!")
+	assert.Equal(t, "nothing changed", status)
+}
