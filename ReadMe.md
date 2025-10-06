@@ -12,6 +12,7 @@ A small, generic, thread-safe event bus for Go. EventBus is type-safe using Go g
 -   Thread-safe — internal synchronization via mutexes; tests run with the `-race` flag.
 -   Centralized Error Handling — all events share a single, attachable error handler (per EventBus instance).
 -   Context Support — handlers receive a `context.Context`, so you can carry deadlines, cancellation, or request-scoped values.
+-   Parallel Emission — `EmitParallel` triggers all handlers concurrently and waits for all to complete.
 
 ---
 
@@ -46,12 +47,17 @@ func main() {
 	// Get (or create) the named event and register a handler
 	greet := bus.Event("greet")
 	greet.Subscribe(func(ctx context.Context, name string) error {
-		fmt.Printf("Hello, %s!\n", name)
+		fmt.Printf("Hello %s!", name)
 		return nil
 	})
 
-	// Emit the event
-	greet.Emit(context.Background(), "Sina")
+	greet.Subscribe(func(ctx context.Context, name string) error {
+		fmt.Printf("Hi %s!!!", name)
+		return nil
+	})
+
+	// Emit the event concurrently and wait until all finish (handlers will run in parallel)
+	greet.EmitParallel(context.Background(), "Sina")
 }
 ```
 

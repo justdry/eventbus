@@ -120,3 +120,38 @@ func TestFlushEventHandlers(t *testing.T) {
 	event.Emit(context.Background(), "Hello Universe!")
 	assert.Equal(t, "nothing changed", status)
 }
+
+func TestEmitParallel(t *testing.T) {
+	dataCh := make(chan string, 1)
+	wordCh := make(chan string, 1)
+
+	errCh := make(chan string, 2)
+
+	e := newEvent[string]()
+
+	e.Subscribe(func(_ context.Context, p string) error {
+		wordCh <- <-dataCh
+
+		return errors.New("error_1")
+	})
+
+	e.Subscribe(func(_ context.Context, p string) error {
+		dataCh <- p
+
+		return errors.New("error_2")
+	})
+
+	errorEvent := newErrorEvent[string]()
+	errorEvent.Subscribe(func(ctx context.Context, err error, p string) {
+		errCh <- err.Error()
+	})
+
+	e.ErrorEvent = errorEvent
+
+	e.EmitParallel(context.Background(), "passed")
+
+	assert.Equal(t, "passed", <-wordCh)
+
+	assert.Equal(t, "error_2", <-errCh)
+	assert.Equal(t, "error_1", <-errCh)
+}
