@@ -5,8 +5,8 @@ import (
 )
 
 // Create a new EventBus instance.
-func New[Payload any]() EventBus[Payload] {
-	return EventBus[Payload]{
+func New[Payload any]() *EventBus[Payload] {
+	return &EventBus[Payload]{
 		events:     make(map[string]*Event[Payload]),
 		errorEvent: newErrorEvent[Payload](),
 	}
