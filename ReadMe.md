@@ -70,17 +70,21 @@ bus := eventbus.New[string]()
 
 // Register the handlers that return an error
 bus.Event("danger1").Subscribe(func(ctx context.Context, msg string) error {
-	return fmt.Errorf("handler failed: %s", msg)
+	// Handlers could wrap returned errors using eventbus.NewError(err) to ensure stack traces are captured.
+	return eventbus.NewError(fmt.Errorf("handler failed: %s", msg))
 })
 
 bus.Event("danger2").Subscribe(func(ctx context.Context, msg string) error {
-	return fmt.Errorf("handler chokhed up: %s", msg)
+	return eventbus.NewError(fmt.Errorf("handler chokhed up: %s", msg))
 })
 
 // Register a centralized error handler for the bus
 bus.ErrorEvent().Subscribe(func(ctx context.Context, err error, payload string) {
-	fmt.Println("Error occurred:", err)
+	sErr := err.(*eventbus.StackedError)
+	fmt.Printf("Error occurred:\n%s\n%s", sErr.Error(), sErr.Stack())
 })
+
+eventbus.CaptureErrorStack(true)
 
 // Emitting will call the handler, and the first returned error (if any)
 // will be forwarded to the ErrorEvent handler.

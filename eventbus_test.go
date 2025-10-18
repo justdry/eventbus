@@ -46,5 +46,28 @@ func TestBusShouldUseSameErrorEventForAllEvents(t *testing.T) {
 	})
 
 	assert.Same(t, bus.Event("test1").ErrorEvent, bus.Event("test2").ErrorEvent)
+}
 
+func TestErrorHandlerStackTrace(t *testing.T) {
+	trace := ""
+
+	bus := eventbus.New[any]()
+
+	bus.ErrorEvent().Subscribe(func(ctx context.Context, err error, p any) {
+		trace = string(err.(*eventbus.StackedError).Stack())
+	})
+
+	test := bus.Event("test")
+
+	test.Subscribe(justReturnError)
+
+	eventbus.CaptureErrorStack(true)
+
+	test.Emit(context.Background(), nil)
+	assert.Contains(t, trace, "eventbus_test.go")
+	assert.Contains(t, trace, "justReturnError")
+}
+
+func justReturnError(ctx context.Context, p any) error {
+	return eventbus.NewError(errors.New("oh!"))
 }
