@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEmitErrorEvent(t *testing.T) {
@@ -18,7 +18,7 @@ func TestEmitErrorEvent(t *testing.T) {
 	})
 
 	e.Emit(context.Background(), errors.New("I know"), nil)
-	assert.Equal(t, "I know", status)
+	require.Equal(t, "I know", status)
 }
 
 func TestEmitErrorEventUsingContext(t *testing.T) {
@@ -33,7 +33,7 @@ func TestEmitErrorEventUsingContext(t *testing.T) {
 	ctx := context.WithValue(context.Background(), KEY_NAME, "sina")
 	e.Emit(ctx, nil, nil)
 
-	assert.Equal(t, ctx.Value(KEY_NAME), name)
+	require.Equal(t, ctx.Value(KEY_NAME), name)
 }
 
 // It should run with the `-race` flag
@@ -47,7 +47,7 @@ func TestErrorEventRaceCondition(t *testing.T) {
 		go e.Emit(context.Background(), nil, nil)
 	}
 
-	assert.NotPanics(t, registerAndEmit)
+	require.NotPanics(t, registerAndEmit)
 }
 
 func TestFlushErrorHandler(t *testing.T) {
@@ -62,5 +62,5 @@ func TestFlushErrorHandler(t *testing.T) {
 	e.Flush()
 
 	e.Emit(context.Background(), errors.New("I know"), nil)
-	assert.Equal(t, "Don't know", status)
+	require.Equal(t, "Don't know", status)
 }

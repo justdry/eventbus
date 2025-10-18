@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type Example string
@@ -24,7 +24,7 @@ func TestEmitEvent(t *testing.T) {
 	})
 
 	e.Emit(context.Background(), nil)
-	assert.NotEqual(t, "failed", status)
+	require.NotEqual(t, "failed", status)
 }
 
 func TestEmitUsingContext(t *testing.T) {
@@ -41,7 +41,7 @@ func TestEmitUsingContext(t *testing.T) {
 	ctx := context.WithValue(context.Background(), KEY_NAME, "sina")
 	e.Emit(ctx, nil)
 
-	assert.Equal(t, ctx.Value(KEY_NAME), name)
+	require.Equal(t, ctx.Value(KEY_NAME), name)
 }
 
 // It should run with the `-race` flag
@@ -56,7 +56,7 @@ func TestEventRaceCondition(t *testing.T) {
 		go e.Emit(context.Background(), nil)
 	}
 
-	assert.NotPanics(t, registerAndEmit)
+	require.NotPanics(t, registerAndEmit)
 }
 
 func TestEmitAllHandlers(t *testing.T) {
@@ -77,8 +77,8 @@ func TestEmitAllHandlers(t *testing.T) {
 	})
 
 	e.Emit(context.Background(), nil)
-	assert.NotEqual(t, "failed", status[0])
-	assert.NotEqual(t, "failed", status[1])
+	require.NotEqual(t, "failed", status[0])
+	require.NotEqual(t, "failed", status[1])
 }
 
 func TestEventEmitsErrorHandlerOnReceivingError(t *testing.T) {
@@ -94,16 +94,16 @@ func TestEventEmitsErrorHandlerOnReceivingError(t *testing.T) {
 		status = p
 	})
 
-	assert.NotPanics(t, func() {
+	require.NotPanics(t, func() {
 		event.Emit(context.Background(), "world")
 	})
 
 	event.ErrorEvent = errorEvent
 
 	err := event.Emit(context.Background(), "world")
-	assert.NotEqual(t, "Oh", err)
+	require.NotEqual(t, "Oh", err)
 
-	assert.Equal(t, "world", status)
+	require.Equal(t, "world", status)
 }
 
 func TestFlushEventHandlers(t *testing.T) {
@@ -118,7 +118,7 @@ func TestFlushEventHandlers(t *testing.T) {
 	event.Flush()
 
 	event.Emit(context.Background(), "Hello Universe!")
-	assert.Equal(t, "nothing changed", status)
+	require.Equal(t, "nothing changed", status)
 }
 
 func TestEmitParallel(t *testing.T) {
@@ -150,8 +150,8 @@ func TestEmitParallel(t *testing.T) {
 
 	e.EmitParallel(context.Background(), "passed")
 
-	assert.Equal(t, "passed", <-wordCh)
+	require.Equal(t, "passed", <-wordCh)
 
-	assert.Equal(t, "error_2", <-errCh)
-	assert.Equal(t, "error_1", <-errCh)
+	require.Equal(t, "error_2", <-errCh)
+	require.Equal(t, "error_1", <-errCh)
 }

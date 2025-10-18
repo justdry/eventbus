@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/justdry/eventbus"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBusEventAvoidDuplicateEvent(t *testing.T) {
@@ -18,7 +18,7 @@ func TestBusEventAvoidDuplicateEvent(t *testing.T) {
 	e2 := bus.Event("test")
 	e2.Subscribe(func(ctx context.Context, p any) error { return errors.New("") })
 
-	assert.Equal(t, e1, e2)
+	require.Equal(t, e1, e2)
 }
 
 // It should run with the `-race` flag
@@ -31,7 +31,7 @@ func TestBusEventRaceCondition(t *testing.T) {
 		go e.Event("second")
 	}
 
-	assert.NotPanics(t, registerAndEmit)
+	require.NotPanics(t, registerAndEmit)
 }
 
 func TestBusShouldUseSameErrorEventForAllEvents(t *testing.T) {
@@ -45,7 +45,7 @@ func TestBusShouldUseSameErrorEventForAllEvents(t *testing.T) {
 		return errors.New(" error in the world")
 	})
 
-	assert.Same(t, bus.Event("test1").ErrorEvent, bus.Event("test2").ErrorEvent)
+	require.Same(t, bus.Event("test1").ErrorEvent, bus.Event("test2").ErrorEvent)
 }
 
 func TestErrorHandlerStackTrace(t *testing.T) {
@@ -64,8 +64,8 @@ func TestErrorHandlerStackTrace(t *testing.T) {
 	eventbus.CaptureErrorStack(true)
 
 	test.Emit(context.Background(), nil)
-	assert.Contains(t, trace, "eventbus_test.go")
-	assert.Contains(t, trace, "justReturnError")
+	require.Contains(t, trace, "eventbus_test.go")
+	require.Contains(t, trace, "justReturnError")
 }
 
 func justReturnError(ctx context.Context, p any) error {
