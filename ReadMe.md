@@ -138,3 +138,6 @@ The tests exercise event emitting, context propagation, error forwarding, and co
 ## Contributing
 
 Contributions, bug reports, and improvements are welcome. Please open issues or PRs on the repository.
+
+## License
+MIT License - see [LICENSE](LICENSE) for full text
