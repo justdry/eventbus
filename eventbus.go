@@ -42,3 +42,11 @@ func (bus *EventBus[Payload]) Event(name string) *Event[Payload] {
 func (bus *EventBus[Payload]) ErrorEvent() *ErrorEvent[Payload] {
 	return bus.errorEvent
 }
+
+// Delete an Event with the given name.
+func (bus *EventBus[Payload]) DeleteEvent(name string) {
+	bus.mux.Lock()
+	defer bus.mux.Unlock()
+
+	delete(bus.events, name)
+}

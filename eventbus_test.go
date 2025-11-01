@@ -71,3 +71,15 @@ func TestErrorHandlerStackTrace(t *testing.T) {
 func justReturnError(ctx context.Context, p any) error {
 	return eventbus.NewError(errors.New("oh!"))
 }
+
+func TestDeleteEvent(t *testing.T) {
+	bus := eventbus.New[any]()
+
+	t1 := bus.Event("test")
+	require.Same(t, t1, bus.Event("test"))
+
+	bus.DeleteEvent("test")
+	t2 := bus.Event("test")
+
+	require.NotSame(t, t1, t2)
+}
