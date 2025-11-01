@@ -1,6 +1,9 @@
 # EventBus
+[![Go Reference](https://pkg.go.dev/badge/github.com/justdry/eventbus.svg)](https://pkg.go.dev/github.com/justdry/eventbus)
 
-<img src=".github/splash.jpg" width="60%" alt="JustDRY's EventBus Splash" />
+<p align="center">
+  <img src=".github/splash.jpg" width="40%" alt="JustDRY's EventBus Splash" />
+</p>
 
 A small, generic, thread-safe event bus for Go. EventBus is type-safe using Go generics, supports contexts for propagation of request-scoped values and deadlines, and provides a centralized mechanism for handling errors produced by event handlers.
 
