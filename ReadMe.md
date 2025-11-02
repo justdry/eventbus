@@ -1,6 +1,7 @@
 # EventBus
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/justdry/eventbus.svg)](https://pkg.go.dev/github.com/justdry/eventbus)
+[![codecov](https://codecov.io/github/justdry/eventbus/branch/main/graph/badge.svg?token=C4V0XESSHO)](https://codecov.io/github/justdry/eventbus)
 
 <p align="center">
 	<img src=".github/splash.png" width="60%" alt="JustDRY's EventBus Splash" />
@@ -144,4 +145,5 @@ The tests exercise event emitting, context propagation, error forwarding, and co
 Contributions, bug reports, and improvements are welcome. Please open issues or PRs on the repository.
 
 ## License
+
 MIT License - see [LICENSE](LICENSE) for full text
