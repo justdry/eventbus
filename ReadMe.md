@@ -1,7 +1,16 @@
 # EventBus
 
+<div align="center">
+
+![Go Version](https://img.shields.io/badge/go-%3E%3D1.25-blue)
 [![Go Reference](https://pkg.go.dev/badge/github.com/justdry/eventbus.svg)](https://pkg.go.dev/github.com/justdry/eventbus)
-[![codecov](https://codecov.io/github/justdry/eventbus/branch/main/graph/badge.svg?token=C4V0XESSHO)](https://codecov.io/github/justdry/eventbus)
+[![Code Coverage](https://codecov.io/github/justdry/eventbus/branch/main/graph/badge.svg?token=C4V0XESSHO)](https://codecov.io/github/justdry/eventbus)
+[![Go Quality Report](https://goreportcard.com/badge/github.com/justdry/eventbus)](https://goreportcard.com/report/github.com/justdry/eventbus)
+[![Tests](https://github.com/justdry/eventbus/actions/workflows/test.yml/badge.svg)](https://github.com/justdry/eventbus/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Last Release](https://img.shields.io/github/v/release/justdry/eventbus)](https://github.com/justdry/eventbus/releases)
+
+</div>
 
 <p align="center">
 	<img src=".github/splash.png" width="60%" alt="JustDRY's EventBus Splash" />
