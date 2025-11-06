@@ -40,7 +40,9 @@ go get github.com/justdry/eventbus
 
 ## Quick Start
 
-This package exposes a generic EventBus type. Create a bus using `eventbus`.`New[Payload]()`, register named events using `Event(name)` and subscribe handlers to those events.
+### Example Project
+
+A complete runnable example project is available in the [`example/`](./example) directory.
 
 ### Basic example
 
